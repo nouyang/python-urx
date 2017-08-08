@@ -22,7 +22,7 @@ class URRobot(object):
 
     """
     Python interface to socket interface of UR robot.
-    programs are send to port 3002
+    programs are send to port 30002
     data is read from secondary interface(10Hz?) and real-time interface(125Hz) (called Matlab interface in documentation)
     Since parsing the RT interface uses som CPU, and does not support all robots versions, it is disabled by default
     The RT interfaces is only used for the get_force related methods
