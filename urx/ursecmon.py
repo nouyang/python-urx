@@ -49,7 +49,6 @@ class ParserUtils(object):
 
     def __init__(self):
         self.logger = logging.getLogger("ursecmon")
-        self.logger.setLevel(logging.DEBUG)
         self.version = (0, 0)
 
     def parse(self, data):
@@ -68,16 +67,15 @@ class ParserUtils(object):
                 # this parses RobotModeData for versions >=3.0 (i.e. 3.0)
                 if psize == 38:
                     self.version = (3, 0)
-                    allData['RobotModeData'] = self._get_data(pdata, "!IBQ???????BBdd", ("size", "type", "timestamp", "isRobotConnected", "isRealRobotEnabled", "isPowerOnRobot", "isEmergencyStopped", "isSecurityStopped", "isProgramRunning", "isProgramPaused", "robotMode", "controlMode", "speedFraction", "speedScaling"))
+                    allData['RobotModeData'] = self._get_data(pdata, "!IBQ???????BBdd", ("size", "type", "timestamp", "isPhysicalRobotConnected", "isRealRobotEnabled", "isPowerOnRobot", "isEmergencyStopped", "isSecurityStopped", "isProgramRunning", "isProgramPaused", "robotMode", "controlMode", "speedFraction", "speedScaling"))
                 elif psize == 46:  # It's 46 bytes in 3.2
                     self.version = (3, 2)
-                    allData['RobotModeData'] = self._get_data(pdata, "!IBQ???????BBdd", ("size", "type", "timestamp", "isRobotConnected", "isRealRobotEnabled", "isPowerOnRobot", "isEmergencyStopped", "isSecurityStopped", "isProgramRunning", "isProgramPaused", "robotMode", "controlMode", "speedFraction", "speedScaling", "speedFractionLimit"))
-                elif psize == 47:  # It's 46 bytes in 3.2
-                    # print("FOUND 3.5 PACKET")
+                    allData['RobotModeData'] = self._get_data(pdata, "!IBQ???????BBdd", ("size", "type", "timestamp", "isPhysicalRobotConnected", "isRealRobotEnabled", "isPowerOnRobot", "isEmergencyStopped", "isSecurityStopped", "isProgramRunning", "isProgramPaused", "robotMode", "controlMode", "speedFraction", "speedScaling", "speedFractionLimit"))
+                elif psize == 47:  # It's 47 bytes in 3.5
                     self.version = (3, 5)
-                    allData['RobotModeData'] = self._get_data(pdata, "!IBQ???????BBddB", ("size", "type", "timestamp", "isRobotConnected", "isRealRobotEnabled", "isPowerOnRobot", "isEmergencyStopped", "isSecurityStopped", "isProgramRunning", "isProgramPaused", "robotMode", "controlMode", "speedFraction", "speedScaling", "speedFractionLimit", "ur_private"))
+                    allData['RobotModeData'] = self._get_data(pdata, "!IBQ???????BBddB", ("size", "type", "timestamp", "isPhysicalRobotConnected", "isRealRobotEnabled", "isPowerOnRobot", "isEmergencyStopped", "isSecurityStopped", "isProgramRunning", "isProgramPaused", "robotMode", "controlMode", "speedFraction", "speedScaling", "speedFractionLimit", "ur_private"))
                 else:
-                    allData["RobotModeData"] = self._get_data(pdata, "!iBQ???????Bd", ("size", "type", "timestamp", "isRobotConnected", "isRealRobotEnabled", "isPowerOnRobot", "isEmergencyStopped", "isSecurityStopped", "isProgramRunning", "isProgramPaused", "robotMode", "speedFraction"))
+                    allData["RobotModeData"] = self._get_data(pdata, "!iBQ???????Bd", ("size", "type", "timestamp", "isPhysicalRobotConnected", "isRealRobotEnabled", "isPowerOnRobot", "isEmergencyStopped", "isSecurityStopped", "isProgramRunning", "isProgramPaused", "robotMode", "speedFraction"))
             elif ptype == 1:
                 tmpstr = ["size", "type"]
                 for i in range(0, 6):
@@ -312,7 +310,6 @@ class SecondaryMonitor(Thread):
                     and self._dict["RobotModeData"]["isRealRobotEnabled"] is True \
                     and self._dict["RobotModeData"]["isEmergencyStopped"] is False \
                     and self._dict["RobotModeData"]["isSecurityStopped"] is False \
-                    and self._dict["RobotModeData"]["isRobotConnected"] is True \
                     and self._dict["RobotModeData"]["isPowerOnRobot"] is True:
                 self.running = True
             else:

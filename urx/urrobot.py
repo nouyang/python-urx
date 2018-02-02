@@ -31,7 +31,6 @@ class URRobot(object):
 
     def __init__(self, host, use_rt=False):
         self.logger = logging.getLogger("urx")
-        self.logger.setLevel(logging.DEBUG)
         self.host = host
         self.csys = None
 
