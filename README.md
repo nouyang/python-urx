@@ -1,3 +1,4 @@
+# python-urx 
 
 urx is a python library to control the robots from 'Universal robot'. It is published under the LGPL license and comes with absolutely no guarantee.
 
@@ -7,7 +8,13 @@ Both the 'secondary port' interface and the real-time/matlab interface of the UR
 
 urx was primarily developed by [Olivier Roulet-Dubonnet](https://github.com/oroulet) for [Sintef Raufoss Manufacturing](http://www.sintef.no/manufacturing/).
 
-#Example use:
+# Changelog
+
+ * 2018/02/02: Support for SW 3.5.x
+   This version supports the UR10 software version 3.5.x as of January 2018
+   Fixes issues with speed(x) commands 
+
+# Example use:
 
 ```python
 import urx
@@ -42,7 +49,7 @@ except RobotError, ex:
     print("Robot could not execute move (emergency stop for example), do something", ex)
 ```
 
-#Development using Transform objects from math3d library:
+# Development using Transform objects from math3d library:
 
 ```python
 from urx import Robot
@@ -68,7 +75,7 @@ o.rotate_yb(pi)
 robot.set_orientation(o)
 ```
 
-#Other interactive methods/properties
+# Other interactive methods/properties
 
 ```python
 
@@ -84,11 +91,11 @@ rob.set_csys(csys)
 ```
 
 
-#Robotiq Gripper
+# Robotiq Gripper
 
 urx can also control a Robotiq gripper attached to the UR robot.  The robotiq class was primarily developed by [Mark Silliman](https://github.com/markwsilliman).
 
-##Example use:
+## Example use:
 
 ```python
 import sys
