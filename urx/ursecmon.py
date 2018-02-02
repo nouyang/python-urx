@@ -314,8 +314,6 @@ class SecondaryMonitor(Thread):
                     and (self._dict["RobotModeData"]["isPhysicalRobotConnected"] or self.simulation) \
                     and self._dict["RobotModeData"]["isPowerOnRobot"] is True:
                 self.running = True
-            elif self.simulation is True:
-                self.running = True
             else:
                 if self.running:
                     self.logger.error("Robot not running: " + str(self._dict["RobotModeData"]))
