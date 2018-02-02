@@ -29,13 +29,13 @@ class URRobot(object):
     Rmq: A program sent to the robot i executed immendiatly and any running program is stopped
     """
 
-    def __init__(self, host, use_rt=False):
+    def __init__(self, host, use_rt=False, use_simulation=False):
         self.logger = logging.getLogger("urx")
         self.host = host
         self.csys = None
 
         self.logger.debug("Opening secondary monitor socket")
-        self.secmon = ursecmon.SecondaryMonitor(self.host)  # data from robot at 10Hz
+        self.secmon = ursecmon.SecondaryMonitor(self.host, use_simulation)  # data from robot at 10Hz
 
         self.rtmon = None
         self.rtlog = None

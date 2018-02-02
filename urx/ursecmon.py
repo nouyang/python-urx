@@ -235,7 +235,7 @@ class SecondaryMonitor(Thread):
     Monitor data from secondary port and send programs to robot
     """
 
-    def __init__(self, host):
+    def __init__(self, host, use_simulation=False):
         Thread.__init__(self)
         self.logger = logging.getLogger("ursecmon")
         self._parser = ParserUtils()
@@ -251,7 +251,7 @@ class SecondaryMonitor(Thread):
         self.running = False  # True when robot is on and listening
         self._dataEvent = Condition()
         self.lastpacket_timestamp = 0
-        self.simulation = False
+        self.simulation = use_simulation
 
         self.start()
         self.wait()  # make sure we got some data before someone calls us
