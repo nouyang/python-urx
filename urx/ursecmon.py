@@ -332,9 +332,6 @@ class SecondaryMonitor(Thread):
             self._dataEvent.notifyAll()
 
 
-
-
-
     def _get_data(self):
         """
         returns something that looks like a packet, nothing is guaranted
