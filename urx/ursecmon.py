@@ -203,7 +203,7 @@ class ParserUtils(object):
         returns None if none found
         """
         counter = 0
-        limit = 10
+        limit = 100
         while True:
             if len(data) >= 5:
                 psize, ptype = self.get_header(data)
@@ -243,7 +243,7 @@ class SecondaryMonitor(Thread):
         self._dictLock = Lock()
         self.host = host
         secondary_port = 30002    # Secondary client interface on Universal Robots
-        self._s_secondary = socket.create_connection((self.host, secondary_port), timeout=0.5)
+        self._s_secondary = socket.create_connection((self.host, secondary_port), timeout=1.5)
         self._prog_queue = []
         self._prog_queue_lock = Lock()
         self._dataqueue = bytes()
@@ -251,6 +251,7 @@ class SecondaryMonitor(Thread):
         self.running = False  # True when robot is on and listening
         self._dataEvent = Condition()
         self.lastpacket_timestamp = 0
+        self.simulation = False
 
         self.start()
         self.wait()  # make sure we got some data before someone calls us
@@ -280,45 +281,59 @@ class SecondaryMonitor(Thread):
         so this is not guaranted and we cannot rely on information to the primary client.
         """
         while not self._trystop:
-            with self._prog_queue_lock:
-                if len(self._prog_queue) > 0:
-                    data = self._prog_queue.pop(0)
-                    self._s_secondary.send(data.program)
-                    with data.condition:
-                        data.condition.notify_all()
-
-            data = self._get_data()
             try:
-                tmpdict = self._parser.parse(data)
-                with self._dictLock:
-                    self._dict = tmpdict
-            except ParsingException as ex:
-                self.logger.warning("Error parsing one packet from urrobot: %s", ex)
-                continue
+                with self._prog_queue_lock:
+                    if len(self._prog_queue) > 0:
+                        data = self._prog_queue.pop(0)
+                        self._s_secondary.send(data.program)
+                        with data.condition:
+                            data.condition.notify_all()
 
-            if "RobotModeData" not in self._dict:
-                self.logger.warning("Got a packet from robot without RobotModeData, strange ...")
-                continue
+                data = self._get_data()
+                try:
+                    tmpdict = self._parser.parse(data)
+                    with self._dictLock:
+                        self._dict = tmpdict
+                except ParsingException as ex:
+                    self.logger.warning("Error parsing one packet from urrobot: %s", ex)
+                    continue
 
-            self.lastpacket_timestamp = time.time()
+                if "RobotModeData" not in self._dict:
+                    self.logger.warning("Got a packet from robot without RobotModeData, strange ...")
+                    continue
 
-            rmode = 0
-            if self._parser.version >= (3, 0):
-                rmode = 7
+                self.lastpacket_timestamp = time.time()
 
-            if self._dict["RobotModeData"]["robotMode"] == rmode \
-                    and self._dict["RobotModeData"]["isRealRobotEnabled"] is True \
-                    and self._dict["RobotModeData"]["isEmergencyStopped"] is False \
-                    and self._dict["RobotModeData"]["isSecurityStopped"] is False \
-                    and self._dict["RobotModeData"]["isPowerOnRobot"] is True:
-                self.running = True
-            else:
+                rmode = 0
+                if self._parser.version >= (3, 0):
+                    rmode = 7
+
+                if self._dict["RobotModeData"]["robotMode"] == rmode \
+                        and self._dict["RobotModeData"]["isRealRobotEnabled"] is True \
+                        and self._dict["RobotModeData"]["isEmergencyStopped"] is False \
+                        and self._dict["RobotModeData"]["isSecurityStopped"] is False \
+                        and (self._dict["RobotModeData"]["isRobotConnected"] or self.simulation) \
+                        and self._dict["RobotModeData"]["isPowerOnRobot"] is True:
+                    self.running = True
+                else:
+                    if self.running:
+                        self.logger.error("Robot not running: " + str(self._dict["RobotModeData"]))
+                    self.running = False
+                with self._dataEvent:
+                    #print("X: new data")
+                    self._dataEvent.notifyAll()
+            except:
                 if self.running:
-                    self.logger.error("Robot not running: " + str(self._dict["RobotModeData"]))
-                self.running = False
-            with self._dataEvent:
-                # print("X: new data")
-                self._dataEvent.notifyAll()
+                    self.running = False
+                    self.logger.error("Secondary interface stopped running")
+
+        self.running = False
+        with self._dataEvent:
+            self._dataEvent.notifyAll()
+
+
+
+
 
     def _get_data(self):
         """
@@ -336,7 +351,7 @@ class SecondaryMonitor(Thread):
                 tmp = self._s_secondary.recv(1024)
                 self._dataqueue += tmp
 
-    def wait(self, timeout=0.5):
+    def wait(self, timeout=2.):
         """
         wait for next data packet from robot
         """
@@ -344,6 +359,7 @@ class SecondaryMonitor(Thread):
         with self._dataEvent:
             self._dataEvent.wait(timeout)
             if tstamp == self.lastpacket_timestamp:
+                self.running = False
                 raise TimeoutException("Did not receive a valid data packet from robot in {}".format(timeout))
 
     def get_cartesian_info(self, wait=False):
@@ -437,3 +453,4 @@ class SecondaryMonitor(Thread):
         if self._s_secondary:
             with self._prog_queue_lock:
                 self._s_secondary.close()
+        self.running = False
